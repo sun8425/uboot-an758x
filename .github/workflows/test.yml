@@ -16,10 +16,8 @@ jobs:
           git clone https://github.com/pbs05/uboot-an758x.git uboot
           cd uboot
           git checkout main
-          echo "=== listing configs root ==="
+          echo "=== listing configs folder ==="
           ls -1 configs/
-          echo "=== listing arch/arm64/configs ==="
-          ls -1 arch/arm64/configs/
 
       - name: Configure U-Boot with correct defconfig
         run: |
