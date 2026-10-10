@@ -1,0 +1,74 @@
+name: Build minimal U-Boot + FIP AN7581
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install toolchain & deps
+        run: |
+          sudo apt update
+          sudo apt install -y aarch64-linux-gnu-gcc aarch64-linux-gnu-binutils git make device-tree-compiler libssl-dev
+
+      - name: Clone uboot-an758x
+        run: |
+          git clone https://github.com/pbs05/uboot-an758x.git uboot
+          cd uboot
+          git checkout main
+
+      - name: Patch U-Boot config, minimal cut
+        run: |
+          cd uboot
+          # 加载an7581默认配置，然后批量关闭所有不需要模块
+          make airoha_an7581_defconfig
+          sed -i 's/CONFIG_CMD_MMC=y/#CONFIG_CMD_MMC=y/' .config
+          sed -i 's/CONFIG_CMD_UBI=y/#CONFIG_CMD_UBI=y/' .config
+          sed -i 's/CONFIG_CMD_ETH=y/#CONFIG_CMD_ETH=y/' .config
+          sed -i 's/CONFIG_CMD_PON=y/#CONFIG_CMD_PON=y/' .config
+          sed -i 's/CONFIG_USB=y/#CONFIG_USB=y/' .config
+          sed -i 's/CONFIG_NET=y/#CONFIG_NET=y/' .config
+          sed -i 's/CONFIG_DM_ETH=y/#CONFIG_DM_ETH=y/' .config
+          sed -i 's/CONFIG_EMMC=y/#CONFIG_EMMC=y/' .config
+          sed -i 's/CONFIG_SPI=y/#CONFIG_SPI=y/' .config
+          sed -i 's/CONFIG_BOOTCOUNT=y/#CONFIG_BOOTCOUNT=y/' .config
+          sed -i 's/CONFIG_ENV=y/#CONFIG_ENV=y/' .config
+          sed -i 's/CONFIG_ENV_IS_IN_MMC=y/#CONFIG_ENV_IS_IN_MMC=y/' .config
+          sed -i 's/CONFIG_LOG=y/#CONFIG_LOG=y/' .config
+          sed -i 's/CONFIG_SERIAL=y/CONFIG_SERIAL=y/' .config
+          sed -i 's/CONFIG_CMD_GO=y/CONFIG_CMD_GO=y/' .config
+          # 关闭设备树，进一步瘦身
+          sed -i 's/CONFIG_OF_LIB=y/#CONFIG_OF_LIB=y/' .config
+
+      - name: Build minimal U-Boot
+        run: |
+          cd uboot
+          CROSS_COMPILE=aarch64-linux-gnu- make -j$(nproc)
+          ls -lh u-boot.bin
+
+      - name: Clone ATF for BL31 + fiptool
+        run: |
+          git clone https://github.com/Ansuel/atf-airoha.git atf
+          cd atf
+          # 只编译BL31，不编译BL2
+          CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- make PLAT=an7581 ENABLE_RME=0 bl31
+          ls -lh build/an7581/release/bl31.bin
+
+      - name: Build fiptool
+        run: |
+          cd atf/tools/fiptool
+          make
+          ls -lh fiptool
+
+      - name: Package FIP (BL31 + u-boot.bin)
+        run: |
+          cp atf/build/an7581/release/bl31.bin .
+          cp uboot/u-boot.bin .
+          ./atf/tools/fiptool/fiptool create --bl31 bl31.bin --bl33 u-boot.bin fip.bin
+          ls -lh fip.bin
+
+      - name: Upload fip.bin
+        uses: actions/upload-artifact@v4
+        with:
+          name: minimal-fip
+          path: fip.bin
