@@ -9,7 +9,8 @@ jobs:
       - name: Install toolchain & deps
         run: |
           sudo apt update
-          sudo apt install -y aarch64-linux-gnu-gcc aarch64-linux-gnu-binutils git make device-tree-compiler libssl-dev
+          # 修正包名！
+          sudo apt install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu git make device-tree-compiler libssl-dev
 
       - name: Clone uboot-an758x
         run: |
@@ -20,7 +21,6 @@ jobs:
       - name: Patch U-Boot config, minimal cut
         run: |
           cd uboot
-          # 加载an7581默认配置，然后批量关闭所有不需要模块
           make airoha_an7581_defconfig
           sed -i 's/CONFIG_CMD_MMC=y/#CONFIG_CMD_MMC=y/' .config
           sed -i 's/CONFIG_CMD_UBI=y/#CONFIG_CMD_UBI=y/' .config
@@ -35,10 +35,9 @@ jobs:
           sed -i 's/CONFIG_ENV=y/#CONFIG_ENV=y/' .config
           sed -i 's/CONFIG_ENV_IS_IN_MMC=y/#CONFIG_ENV_IS_IN_MMC=y/' .config
           sed -i 's/CONFIG_LOG=y/#CONFIG_LOG=y/' .config
-          sed -i 's/CONFIG_SERIAL=y/CONFIG_SERIAL=y/' .config
-          sed -i 's/CONFIG_CMD_GO=y/CONFIG_CMD_GO=y/' .config
-          # 关闭设备树，进一步瘦身
           sed -i 's/CONFIG_OF_LIB=y/#CONFIG_OF_LIB=y/' .config
+          # 开启-Os体积优化
+          echo "CONFIG_CC_OPTIMIZE_FOR_SIZE=y" >> .config
 
       - name: Build minimal U-Boot
         run: |
@@ -50,8 +49,7 @@ jobs:
         run: |
           git clone https://github.com/Ansuel/atf-airoha.git atf
           cd atf
-          # 只编译BL31，不编译BL2
-          CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- make PLAT=an7581 ENABLE_RME=0 bl31
+          CROSS_COMPILE=aarch64-linux-gnu- make PLAT=an7581 ENABLE_RME=0 bl31
           ls -lh build/an7581/release/bl31.bin
 
       - name: Build fiptool
