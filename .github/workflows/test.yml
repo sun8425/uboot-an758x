@@ -16,26 +16,35 @@ jobs:
           git clone https://github.com/pbs05/uboot-an758x.git uboot
           cd uboot
           git checkout main
-          ls arch/arm64/configs/
+          echo "=== listing configs root ==="
+          ls -1 configs/
+          echo "=== listing arch/arm64/configs ==="
+          ls -1 arch/arm64/configs/
+
+      - name: Configure U-Boot with correct defconfig
+        run: |
+          cd uboot
+          make an7581_evb_defconfig
+          echo "=== .config exists ==="
+          ls -la .config
 
       - name: Patch U-Boot config, minimal cut
         run: |
           cd uboot
-          make an7581_evb_defconfig
-          sed -i 's/CONFIG_CMD_MMC=y/#CONFIG_CMD_MMC=y/' .config
-          sed -i 's/CONFIG_CMD_UBI=y/#CONFIG_CMD_UBI=y/' .config
-          sed -i 's/CONFIG_CMD_ETH=y/#CONFIG_CMD_ETH=y/' .config
-          sed -i 's/CONFIG_CMD_PON=y/#CONFIG_CMD_PON=y/' .config
-          sed -i 's/CONFIG_USB=y/#CONFIG_USB=y/' .config
-          sed -i 's/CONFIG_NET=y/#CONFIG_NET=y/' .config
-          sed -i 's/CONFIG_DM_ETH=y/#CONFIG_DM_ETH=y/' .config
-          sed -i 's/CONFIG_EMMC=y/#CONFIG_EMMC=y/' .config
-          sed -i 's/CONFIG_SPI=y/#CONFIG_SPI=y/' .config
-          sed -i 's/CONFIG_BOOTCOUNT=y/#CONFIG_BOOTCOUNT=y/' .config
-          sed -i 's/CONFIG_ENV=y/#CONFIG_ENV=y/' .config
-          sed -i 's/CONFIG_ENV_IS_IN_MMC=y/#CONFIG_ENV_IS_IN_MMC=y/' .config
-          sed -i 's/CONFIG_LOG=y/#CONFIG_LOG=y/' .config
-          sed -i 's/CONFIG_OF_LIB=y/#CONFIG_OF_LIB=y/' .config
+          sed -i 's/^CONFIG_CMD_MMC=y$/# CONFIG_CMD_MMC is not set/' .config
+          sed -i 's/^CONFIG_CMD_UBI=y$/# CONFIG_CMD_UBI is not set/' .config
+          sed -i 's/^CONFIG_CMD_ETH=y$/# CONFIG_CMD_ETH is not set/' .config
+          sed -i 's/^CONFIG_CMD_PON=y$/# CONFIG_CMD_PON is not set/' .config
+          sed -i 's/^CONFIG_USB=y$/# CONFIG_USB is not set/' .config
+          sed -i 's/^CONFIG_NET=y$/# CONFIG_NET is not set/' .config
+          sed -i 's/^CONFIG_DM_ETH=y$/# CONFIG_DM_ETH is not set/' .config
+          sed -i 's/^CONFIG_EMMC=y$/# CONFIG_EMMC is not set/' .config
+          sed -i 's/^CONFIG_SPI=y$/# CONFIG_SPI is not set/' .config
+          sed -i 's/^CONFIG_BOOTCOUNT=y$/# CONFIG_BOOTCOUNT is not set/' .config
+          sed -i 's/^CONFIG_ENV=y$/# CONFIG_ENV is not set/' .config
+          sed -i 's/^CONFIG_ENV_IS_IN_MMC=y$/# CONFIG_ENV_IS_IN_MMC is not set/' .config
+          sed -i 's/^CONFIG_LOG=y$/# CONFIG_LOG is not set/' .config
+          sed -i 's/^CONFIG_OF_LIB=y$/# CONFIG_OF_LIB is not set/' .config
           echo "CONFIG_CC_OPTIMIZE_FOR_SIZE=y" >> .config
 
       - name: Build minimal U-Boot
