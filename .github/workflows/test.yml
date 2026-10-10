@@ -9,7 +9,6 @@ jobs:
       - name: Install toolchain & deps
         run: |
           sudo apt update
-          # 修正包名！
           sudo apt install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu git make device-tree-compiler libssl-dev
 
       - name: Clone uboot-an758x
@@ -17,11 +16,12 @@ jobs:
           git clone https://github.com/pbs05/uboot-an758x.git uboot
           cd uboot
           git checkout main
+          ls arch/arm64/configs/
 
       - name: Patch U-Boot config, minimal cut
         run: |
           cd uboot
-          make airoha_an7581_defconfig
+          make an7581_evb_defconfig
           sed -i 's/CONFIG_CMD_MMC=y/#CONFIG_CMD_MMC=y/' .config
           sed -i 's/CONFIG_CMD_UBI=y/#CONFIG_CMD_UBI=y/' .config
           sed -i 's/CONFIG_CMD_ETH=y/#CONFIG_CMD_ETH=y/' .config
@@ -36,7 +36,6 @@ jobs:
           sed -i 's/CONFIG_ENV_IS_IN_MMC=y/#CONFIG_ENV_IS_IN_MMC=y/' .config
           sed -i 's/CONFIG_LOG=y/#CONFIG_LOG=y/' .config
           sed -i 's/CONFIG_OF_LIB=y/#CONFIG_OF_LIB=y/' .config
-          # 开启-Os体积优化
           echo "CONFIG_CC_OPTIMIZE_FOR_SIZE=y" >> .config
 
       - name: Build minimal U-Boot
